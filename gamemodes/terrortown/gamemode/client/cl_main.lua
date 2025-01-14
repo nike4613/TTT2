@@ -18,6 +18,8 @@ surface.CreateFont(
 )
 surface.CreateFont("Trebuchet22", { font = "Trebuchet MS", size = 22, weight = 900 })
 
+ttt_include("cl_uiscale") -- note: cl_uiscale provides a lib, and overrides a bunch of stuff, that other files will implicitly depend on
+
 ttt_include("sh_init")
 
 ttt_include("sh_cvar_handler")

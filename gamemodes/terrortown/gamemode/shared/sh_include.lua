@@ -2,6 +2,7 @@ TTT2DIR = "terrortown/gamemode/"
 
 TTTFiles = {
     -- client files
+    cl_uiscale = { file = "cl_uiscale.lua", on = "client" },
     cl_armor = { file = "cl_armor.lua", on = "client" },
     cl_awards = { file = "cl_awards.lua", on = "client" },
     cl_changes = { file = "cl_changes.lua", on = "client" },

@@ -24,6 +24,8 @@ local drawFilteredTexture = draw.FilteredTexture
 local drawFilteredShadowedTexture = draw.FilteredShadowedTexture
 local drawAdvancedText = draw.AdvancedText
 local drawBlurredBox = draw.BlurredBox
+local hidpiAware = hidpi.Aware
+local hidpiEndAware = hidpi.EndAware
 
 drawsc = {}
 
@@ -39,6 +41,8 @@ drawsc = {}
 -- @2D
 -- @realm client
 function drawsc.OutlinedBox(x, y, w, h, t, color)
+    x, y, w, h = hidpiAware(x, y, w, h)
+
     local scale = GetGlobalScale()
 
     drawOutlinedBox(
@@ -49,6 +53,8 @@ function drawsc.OutlinedBox(x, y, w, h, t, color)
         mRound(t * scale),
         color
     )
+
+    hidpiEndAware()
 end
 
 ---
@@ -63,6 +69,8 @@ end
 -- @2D
 -- @realm client
 function drawsc.OutlinedShadowedBox(x, y, w, h, t, color)
+    x, y, w, h = hidpiAware(x, y, w, h)
+
     local scale = GetGlobalScale()
 
     drawOutlinedShadowedBox(
@@ -74,6 +82,8 @@ function drawsc.OutlinedShadowedBox(x, y, w, h, t, color)
         color,
         scale
     )
+
+    hidpiEndAware()
 end
 
 ---
@@ -87,9 +97,13 @@ end
 -- @2D
 -- @realm client
 function drawsc.Box(x, y, w, h, color)
+    x, y, w, h = hidpiAware(x, y, w, h)
+
     local scale = GetGlobalScale()
 
     drawBox(mRound(x * scale), mRound(y * scale), mRound(w * scale), mRound(h * scale), color)
+
+    hidpiEndAware()
 end
 
 ---
@@ -103,6 +117,8 @@ end
 -- @2D
 -- @realm client
 function drawsc.ShadowedBox(x, y, w, h, color)
+    x, y, w, h = hidpiAware(x, y, w, h)
+
     local scale = GetGlobalScale()
 
     drawShadowedBox(
@@ -113,6 +129,8 @@ function drawsc.ShadowedBox(x, y, w, h, color)
         color,
         scale
     )
+
+    hidpiEndAware()
 end
 
 ---
@@ -125,9 +143,13 @@ end
 -- @2D
 -- @realm client
 function drawsc.OutlinedCircle(x, y, r, color)
+    x, y, r = hidpiAware(x, y, r)
+
     local scale = GetGlobalScale()
 
     drawOutlinedCircle(mRound(x * scale), mRound(y * scale), mRound(r * scale), color)
+
+    hidpiEndAware()
 end
 
 ---
@@ -140,6 +162,8 @@ end
 -- @2D
 -- @realm client
 function drawsc.OutlinedShadowedCircle(x, y, r, color)
+    x, y, r = hidpiAware(x, y, r)
+
     local scale = GetGlobalScale()
 
     drawOutlinedShadowedCircle(
@@ -149,6 +173,8 @@ function drawsc.OutlinedShadowedCircle(x, y, r, color)
         color,
         scale
     )
+
+    hidpiEndAware()
 end
 
 ---
@@ -164,6 +190,8 @@ end
 -- @2D
 -- @realm client
 function drawsc.FilteredTexture(x, y, w, h, material, alpha, color)
+    x, y, w, h = hidpiAware(x, y, w, h)
+
     local scale = GetGlobalScale()
 
     drawFilteredTexture(
@@ -175,6 +203,8 @@ function drawsc.FilteredTexture(x, y, w, h, material, alpha, color)
         alpha,
         color
     )
+
+    hidpiEndAware()
 end
 
 ---
@@ -190,6 +220,8 @@ end
 -- @2D
 -- @realm client
 function drawsc.FilteredShadowedTexture(x, y, w, h, material, alpha, color)
+    x, y, w, h = hidpiAware(x, y, w, h)
+
     local scale = GetGlobalScale()
 
     drawFilteredShadowedTexture(
@@ -202,6 +234,8 @@ function drawsc.FilteredShadowedTexture(x, y, w, h, material, alpha, color)
         color,
         scale
     )
+
+    hidpiEndAware()
 end
 
 ---
@@ -220,6 +254,8 @@ end
 -- @2D
 -- @realm client
 function drawsc.AdvancedText(text, font, x, y, color, xalign, yalign, angle)
+    x, y = hidpiAware(x, y)
+
     local scale = GetGlobalScale()
 
     drawAdvancedText(
@@ -234,6 +270,8 @@ function drawsc.AdvancedText(text, font, x, y, color, xalign, yalign, angle)
         scale,
         angle
     )
+
+    hidpiEndAware()
 end
 
 ---
@@ -252,6 +290,8 @@ end
 -- @2D
 -- @realm client
 function drawsc.AdvancedShadowedText(text, font, x, y, color, xalign, yalign, angle)
+    x, y = hidpiAware(x, y)
+
     local scale = GetGlobalScale()
 
     drawAdvancedText(
@@ -266,6 +306,8 @@ function drawsc.AdvancedShadowedText(text, font, x, y, color, xalign, yalign, an
         scale,
         angle
     )
+
+    hidpiEndAware()
 end
 
 ---
@@ -278,6 +320,8 @@ end
 -- @2D
 -- @realm client
 function drawsc.BlurredBox(x, y, w, h, fraction)
+    x, y, w, h = hidpiAware(x, y, w, h)
+
     local scale = GetGlobalScale()
 
     drawBlurredBox(
@@ -287,4 +331,6 @@ function drawsc.BlurredBox(x, y, w, h, fraction)
         mRound(h * scale),
         fraction
     )
+
+    hidpiEndAware()
 end
