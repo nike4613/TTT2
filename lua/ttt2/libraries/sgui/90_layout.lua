@@ -8,31 +8,6 @@ local function InstantiateElement(desc)
 
 end
 
-local function MakePathTbl()
-  local tbl = {}
-  setmetatable(tbl, {
-    __tostring = function(self)
-      local str = "["
-      for i = 1, #self do
-        str = str .. "." .. tostring(self[i])
-      end
-      return str .. "]"
-    end,
-    __eq = function(l, r)
-      if #l ~= #r then
-        return false
-      end
-      for i = 1, #l do
-        if l[i] ~= r[i] then
-          return false
-        end
-      end
-      return true
-    end
-  })
-  return tbl
-end
-
 local function BuildRealTree(path, tree, params)
   local elemTy = tree.type or tree.ty
   if not elemTy and tree.vgui then
@@ -58,12 +33,39 @@ local function BuildRealTree(path, tree, params)
       continue -- skip the type descriminator
     end
 
+    if type(v) == "table" and v.param ~= nil then
+      if not params then
+        error("invalid tree: invalid param=" .. v.param .. ": not in sgui element def at " .. path)
+      end
+      if type(v.param) == "number" then
+        -- a { param=1 } expands to the first child, { param=2 } expands to the second, etc
+        v = params.children[v.param]
+      end
+      if type(v.param) == "string" then
+        v = params.opts[v.param]
+      end
+    end
+
     if type(k) == "string" then
       -- an option, record it in the options table
       options[k] = v
     elseif type(k) == "number" then
       -- a child, record it in the children table
-      children[k] = v
+      if type(v) == "table" and v.template == "children" then
+        -- a { template="children" } expands to the list of children specified in the referent
+        if not params then
+          error("invalid tree: invalid template=children: not in sgui element def at " .. path)
+        end
+
+        for i = 1, #params.children do
+          table.insert(children, params.children[i])
+        end
+        continue
+      end
+
+      if v then
+        table.insert(children, v)
+      end
     end
   end
 
@@ -99,4 +101,29 @@ local function BuildRealTree(path, tree, params)
 
     return { cls = elemCls, options = options, children = children2  }
   end
+end
+
+local function MakePathTbl()
+  local tbl = {}
+  setmetatable(tbl, {
+    __tostring = function(self)
+      local str = "["
+      for i = 1, #self do
+        str = str .. "." .. tostring(self[i])
+      end
+      return str .. "]"
+    end,
+    __eq = function(l, r)
+      if #l ~= #r then
+        return false
+      end
+      for i = 1, #l do
+        if l[i] ~= r[i] then
+          return false
+        end
+      end
+      return true
+    end
+  })
+  return tbl
 end
