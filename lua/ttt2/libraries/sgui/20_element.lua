@@ -7,8 +7,23 @@ local sgui = sgui
 local CLS = sgui.Element or {}
 CLS.Name = "Element"
 
+---
+-- Initialized the element.
+-- @param table options The options table for the element.
 function CLS:Init(options)
   self.options = options
+end
+
+---
+-- Updates the options table for the element.
+-- @param table options The options table for the element.
+-- @return boolean Return true if the changes to the options table were handled; false if not. The element object will be re-created if it is not handled.
+function CLS:Update(options)
+  return false
+end
+
+function CLS:GetShadowTree()
+  error(self.Name .. ":GetShadowTree() not implemented. Either implement that, or override :PerformLayout() and :RecordPaint().")
 end
 
 ---

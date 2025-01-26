@@ -20,9 +20,13 @@ if SERVER then
   return
 end
 
+local sgui_local = sgui_local
+_G.sgui_local = {}
 sgui = sgui or {}
 
 -- Include all sgui external modules afterwards
 for i = 1, #sguiFiles do
   include(sguiFilePrefix .. sguiFiles[i] .. ".lua")
 end
+
+_G.sgui_local = sgui_local

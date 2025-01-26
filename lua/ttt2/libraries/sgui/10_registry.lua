@@ -22,6 +22,7 @@ function sgui.RegisterClass(name, cls)
   -- set up the class correctly
   setmetatable(cls, sgui.Element.mt)
   cls.Name = name
+  cls.mt = { __index = cls }
 
   sgui.elements[name] = cls
 end

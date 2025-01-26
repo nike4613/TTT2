@@ -4,10 +4,6 @@
 
 local sgui = sgui
 
-local function InstantiateElement(desc)
-
-end
-
 local function BuildRealTree(path, tree, params)
   local elemTy = tree.type or tree.ty
   if not elemTy and tree.vgui then
@@ -78,11 +74,7 @@ local function BuildRealTree(path, tree, params)
     local result = BuildRealTree(path, def, { opts = options, children = children })
     path[thisPathIdx] = nil
 
-    local resultOptsHasAny = false
-    for _,_ in pairs(result.options) do
-      resultOptsHasAny = true
-      break
-    end
+    local resultOptsHasAny = next(result.options) ~= nil
 
     if not resultOptsHasAny then
       -- if the options of the root element aren't present, use the ones passed in to this element
@@ -99,7 +91,7 @@ local function BuildRealTree(path, tree, params)
     end
     path[thisPathIdx] = nil
 
-    return { cls = elemCls, options = options, children = children2  }
+    return { cls = elemCls, path = tostring(path), options = options, children = children2  }
   end
 end
 
@@ -126,4 +118,60 @@ local function MakePathTbl()
     end
   })
   return tbl
+end
+
+local function TableEq(o1, o2)
+  if o1 == o2 then return true end
+  local o1Type = type(o1)
+  local o2Type = type(o2)
+  if o1Type ~= o2Type then return false end
+  if o1Type ~= 'table' then return false end
+
+  local keySet = {}
+
+  for key1, value1 in pairs(o1) do
+    local value2 = o2[key1]
+    if value2 == nil or TableEq(value1, value2) == false then
+      return false
+    end
+    keySet[key1] = true
+  end
+
+  for key2, _ in pairs(o2) do
+    if not keySet[key2] then return false end
+  end
+  return true
+end
+
+local function CacheClassInstances(cache, cacheInfo, tree)
+  -- start by looking up the instance in the cache
+  local key = tree.path
+  local cached = cache[key]
+
+  local inst
+  if cached then
+    -- we have a cached instance, only reuse if the options are the same
+
+    if TableEq(tree.options, cached.opt) then
+      -- option tables are equal, can reuse
+      inst = cached.inst
+    else
+      -- cannot reuse
+      cacheInfo:RemoveCached(cached)
+      inst = nil
+    end
+  end
+
+  if not inst then
+    -- no cached instance, need to create
+    inst = {}
+    setmetatable(inst, tree.cls.mt)
+    inst:Init(tree.options)
+    local id = cacheInfo:NextId()
+    cache[key] = { inst = inst, opt = tree.options, id = id }
+  end
+
+  -- stash the created instance in
+  tree.inst = inst
+
 end

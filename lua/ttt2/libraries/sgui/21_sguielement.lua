@@ -7,20 +7,27 @@ local sgui = sgui
 local CLS = {}
 CLS.Name = "_SGUIElement"
 
--- TODO: implement properly
-function CLS:Init(...)
-  ErrorNoHaltWithStack("Bad call to _SGUIElement:Init(), which should never be called!")
-  sgui.Element.Init(self, ...)
+function CLS:Init(options)
+  sgui.Element.Init(self, options)
+  self.shadowTree = table.FullCopy(self.defition)
+  setmetatable(self.shadowTree, {__index=options})
+end
+-- TODO: support children passed through options properly?
+function CLS:Update(options)
+  setmetatable(self.shadowTree, {__index=options})
+  return true
+end
+
+function CLS:GetShadowTree()
+  return self.shadowTree
 end
 
 function CLS:PerformLayout(...)
-  ErrorNoHaltWithStack("Bad call to _SGUIElement:PerformLayout(), which should never be called!")
-  sgui.Element.PerformLayout(self, ...)
+  return sgui.Element.PerformLayout(self, ...)
 end
 
 function CLS:RecordPaint(...)
-  ErrorNoHaltWithStack("Bad call to _SGUIElement:RecordPaint(), which should never be called!")
-  sgui.Element.RecordPaint(self, ...)
+  return sgui.Element.RecordPaint(self, ...)
 end
 
 CLS.mt = { __index = CLS }
