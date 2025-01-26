@@ -12,7 +12,7 @@ function CLS:Init(options)
   self.shadowTree = table.FullCopy(self.defition)
   setmetatable(self.shadowTree, {__index=options})
 end
--- TODO: support children passed through options properly?
+
 function CLS:Update(options)
   setmetatable(self.shadowTree, {__index=options})
   return true

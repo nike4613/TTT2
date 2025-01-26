@@ -5,6 +5,8 @@
 local sgui = sgui
 local sgui_local = sgui_local
 
+sgui_local.elemId = {}
+
 local function TableEq(o1, o2)
   if o1 == o2 then return true end
   local o1Type = type(o1)
@@ -29,9 +31,10 @@ local function TableEq(o1, o2)
 end
 
 local Params = {}
+Params.mt = {__index=Params}
 function Params:new(options, children)
   local result = { options = options, children = children }
-  setmetatable(result, {__index=self})
+  setmetatable(result, self.mt)
   return result
 end
 
@@ -211,13 +214,13 @@ local function MakePathTbl()
   return tbl
 end
 
-
+local elemNextId = 1 -- TODO: is it worth doing something more complex here? like a free-list?
+local ambientCache = nil
 local Cache = {}
 function Cache:new()
   local result = {}
   setmetatable(result, {__index=self})
 
-  result.nextId = 1
   result.tree = nil
   result.treeCache = {}
   result.drawListChanges = {}
@@ -226,9 +229,19 @@ function Cache:new()
   return result
 end
 
+function Cache:SetAmbient()
+  local prev = ambientCache
+  ambientCache = self
+  return prev
+end
+
+function Cache.GetAmbient()
+  return ambientCache
+end
+
 function Cache:NextId()
-  local result = self.nextId
-  self.nextId = result + 1
+  local result = elemNextId
+  elemNextId = result + 1
   return result
 end
 

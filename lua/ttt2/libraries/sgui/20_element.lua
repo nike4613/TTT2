@@ -3,6 +3,7 @@
 -- @class sgui.Element
 
 local sgui = sgui
+local sgui_local = sgui_local
 
 local CLS = sgui.Element or {}
 CLS.Name = "Element"
@@ -32,7 +33,21 @@ end
 -- @return table Positioning table
 -- { x, y, w, h } where they can be values based on pseudo-sizes and pseudo-positions. x/y, are relative to parent
 function CLS:PerformLayout(parentSize, children)
-  -- TODO: implement default functionality
+  self.cache = self.cache or sgui_local.Cache:new()
+  self.root = self.cache:Update(self:GetShadowTree(), sgui_local.Params:new(self.options, children))
+  -- TODO: how can we implement default layout functionality? A separate method that box-model elements call?
+  local prevAmbient = self.cache:SetAmbient()
+  local result = self.root.inst:PerformLayout(parentSize, self.root.children)
+  sgui_local.Cache.SetAmbient(prevAmbient)
+  return result
+end
+
+---
+-- Performs layout using the standard box model.
+-- @see @{CLS:PerformLayout}
+function CLS:BoxModelLayout(parentSize, children)
+  local cache = sgui_local.Cache.GetAmbient()
+  -- TODO:
 end
 
 ---

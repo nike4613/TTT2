@@ -3,6 +3,7 @@
 -- @author DaNIke
 
 local sgui = sgui
+local sgui_local = sgui_local
 
 local PANEL = {}
 
@@ -10,9 +11,7 @@ local PANEL = {}
 -- @ignore
 function PANEL:Init()
   self._elemTbl = nil
-  self._elemTreeCache = nil
-  self._vguiCache = {}
-  self._renderList = nil
+  self._cache = sgui_local.Cache:new()
 end
 
 ---
@@ -30,33 +29,18 @@ function PANEL:SetSGUI(tbl)
   self:InvalidateLayout()
 end
 
-
--- @return table
-local function VisitSGUIDef(pnl, reusedPaths, path, tree, oldTree, parentSizing)
-
-end
-
 ---
 -- @ignore
 function PANEL:PerformLayout()
-  -- recall the previous tree
-  local oldTree = self._elemTreeCache
+  self.tree = self._cache:Update(self:GetSGUIDef(), nil)
+  local prevAmbient = self._cache:SetAmbient()
 
-  -- clear the various lists
-  self._elemTreeCache = nil
-  local reusedPaths = {}
+  local w, h = self:GetSize()
+  local finalSize = self.tree.inst:PerformLayout({w=w, h=h}, self.tree.children)
+  self:SetSize(finalSize.w, finalSize.h)
+  self:SetPos(finalSize.x, finalSize.y)
 
-  -- get the new tree
-  local newTree = self:GetSGUIDef()
-
-  -- perform layout (TODO: get size and position out of this and assign it)
-  VisitSGUIDef(self, reusedPaths, ".", newTree, oldTree)
-
-  -- save the tree for the next layout
-  self._elemTreeCache = table.FullCopy(newTree)
-
-  -- clear out the unused VGUI elements from the VGUI cache
-  -- TODO:
+  sgui_local.Cache.SetAmbient(prevAmbient)
 end
 
 ---
