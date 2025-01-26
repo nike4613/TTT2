@@ -28,18 +28,6 @@ local function TableEq(o1, o2)
   return true
 end
 
-local Cache = {}
-function Cache:new()
-  local result = {}
-  setmetatable(result, {__index=self})
-
-  return result
-end
-
-
-
-sgui_local.Cache = Cache
-
 local Params = {}
 function Params:new(options, children)
   local result = { options = options, children = children }
@@ -64,7 +52,7 @@ end
 
 sgui_local.Params = Params
 
-local function RebuildCache(cacheTree, path, declTree, params)
+local function RebuildCache(cache, cacheTree, path, declTree, params)
  local elemTy = declTree.type or declTree.ty
   if not elemTy and declTree.vgui then
     elemTy = "vgui"
@@ -122,7 +110,8 @@ local function RebuildCache(cacheTree, path, declTree, params)
         path[pathIdx] = k
         local cacheChild = cacheTree.children[k] or { children = {} }
         cacheTree.children[k] = cacheChild
-        children[k] = { RebuildCache(cacheChild, path, v, params) }
+        local child = RebuildCache(cacheChild, path, v, params)
+        children[k] = {child}
         path[pathIdx] = nil
       end
     else
@@ -157,15 +146,23 @@ local function RebuildCache(cacheTree, path, declTree, params)
     end
   end
 
+  result = result or {}
+
   if not inst then
     -- need to recreate the instance
     inst = {}
     setmetatable(inst, elemCls)
     inst:Init(options)
+
+    local newId = cache:NextId() -- each instance we create gets a new unique id that we associate with draws for processing there
+    -- tell the cache that we're replacing an id
+    if result.id then
+      cache:ReplaceId(result.id, newId)
+    end
+    result.id = cache:NextId()
   end
 
   -- now build up our result
-  result = result or {}
   result.inst = inst
   result.children = flatChildren
 
@@ -174,9 +171,13 @@ local function RebuildCache(cacheTree, path, declTree, params)
   cacheTree.options = options
 
   -- clear the cached children entries that we don't have anymore
+  local l = #cacheTree.children + 1
   for i = 1, #cacheTree.children do
-    if not children[#cacheTree.children + 1 - i] then
-      cacheTree.children[i] = nil
+    local idx = l - i
+    if not children[idx] then
+      -- we're removing an object, so make sure to also remove its id
+      cache:RemoveId(cacheTree.children[idx].id)
+      cacheTree.children[idx] = nil
     end
   end
 
@@ -184,28 +185,65 @@ local function RebuildCache(cacheTree, path, declTree, params)
   return result
 end
 
-local function MakePathTbl()
-  local tbl = {}
-  setmetatable(tbl, {
-    __tostring = function(self)
-      local str = "["
-      for i = 1, #self do
-        str = str .. "." .. tostring(self[i])
-      end
-      return str .. "]"
-    end,
-    __eq = function(l, r)
-      if #l ~= #r then
+local pathMTbl = {
+  __tostring = function(self)
+    local str = "["
+    for i = 1, #self do
+      str = str .. "." .. tostring(self[i])
+    end
+    return str .. "]"
+  end,
+  __eq = function(l, r)
+    if #l ~= #r then
+      return false
+    end
+    for i = 1, #l do
+      if l[i] ~= r[i] then
         return false
       end
-      for i = 1, #l do
-        if l[i] ~= r[i] then
-          return false
-        end
-      end
-      return true
     end
-  })
+    return true
+  end
+}
+local function MakePathTbl()
+  local tbl = {}
+  setmetatable(tbl, pathMTbl)
   return tbl
 end
 
+
+local Cache = {}
+function Cache:new()
+  local result = {}
+  setmetatable(result, {__index=self})
+
+  result.nextId = 1
+  result.tree = nil
+  result.treeCache = {}
+  result.drawListChanges = {}
+  result.drawList = {}
+
+  return result
+end
+
+function Cache:NextId()
+  local result = self.nextId
+  self.nextId = result + 1
+  return result
+end
+
+function Cache:Update(tree, params)
+  local path = MakePathTbl()
+  self.tree = RebuildCache(self, self.treeCache, path, tree, params)
+  return self.tree
+end
+
+function Cache:RemoveId(id)
+  -- TODO: mark id removal somehow reasonable
+end
+
+function Cache:ReplaceId(oldId, newId)
+  -- TODO: mark id replacement somehow reasonably
+end
+
+sgui_local.Cache = Cache
