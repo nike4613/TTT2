@@ -36,10 +36,7 @@ function CLS:PerformLayout(parentSize, children)
   self.cache = self.cache or sgui_local.Cache:new()
   self.root = self.cache:Update(self:GetShadowTree(), sgui_local.Params:new(self.options, children))
   -- TODO: how can we implement default layout functionality? A separate method that box-model elements call?
-  local prevAmbient = self.cache:SetAmbient()
-  local result = self.root.inst:PerformLayout(parentSize, self.root.children)
-  sgui_local.Cache.SetAmbient(prevAmbient)
-  return result
+  return self.cache:DoLayout(self.root, parentSize)
 end
 
 ---

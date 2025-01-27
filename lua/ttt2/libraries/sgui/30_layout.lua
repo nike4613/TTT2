@@ -219,8 +219,6 @@ local function MakePathTbl()
   return tbl
 end
 
-local elemNextId = 1 -- TODO: is it worth doing something more complex here? like a free-list?
-local ambientCache = nil
 local Cache = {}
 function Cache:new()
   local result = {}
@@ -229,17 +227,11 @@ function Cache:new()
   result.tree = nil
   result.treeCache = {}
 
-  result.cacheById = {}
-  result.needsPaintIds = {}
-  result.removedIds = {}
-  result.replacedIds = {}
-
-  result.drawBefore = {}
-  result.drawAfter = {}
 
   return result
 end
 
+local ambientCache = nil
 function Cache:SetAmbient()
   local prev = ambientCache
   ambientCache = self
@@ -256,26 +248,61 @@ function Cache:Update(tree, params)
   return self.tree
 end
 
+local elemNextId = 1 -- TODO: is it worth doing something more complex here? like a free-list?
 function Cache:NextId()
   local result = elemNextId
   elemNextId = result + 1
   return result
 end
 
+local cacheById = {}
+setmetatable(cacheById, {__mode="v"}) -- cacheById should be a weak-valued table
+local needsPaintIds = {}
+local removedIds = {}
+local replacedIds = {}
+
+-- TODO: where should the draw lists actually go, because i'm 100% certain it shouldn't be here
+local drawBefore = {}
+local drawAfter = {}
+
 function Cache:RecordId(id, cache)
-  self.cacheById[id] = cache
+  cacheById[id] = cache
 end
 
 function Cache:MarkNeedsPaint(id)
-  self.needsPaintIds[#self.needsPaintIds + 1] = id
+  needsPaintIds[id] = true
 end
 
 function Cache:RemoveId(id)
-  self.removedIds[#self.removedIds + 1] = id
+  removedIds[id] = true
 end
 
 function Cache:ReplaceId(oldId, newId)
-  self.replacedIds[oldId] = newId
+  replacedIds[oldId] = newId
+end
+
+function Cache:DoLayout(tree, parentSize)
+  local prev = self:SetAmbient()
+
+  local result
+  if needsPaintIds[tree.id] or not TableEq(parentSize, tree.lastParentSize) then
+    -- this tree item needs to be re-layed-out
+    result = tree.inst:PerformLayout(parentSize, tree.children)
+    if TableEq(tree.computedSize, result) then
+      -- the newly computed sizing information is the same as last time, clear needsPaint because nothing needs to change
+      needsPaintIds[tree.id] = nil
+      -- note: if the *position* of a parent changes, we'll redo paint regardless of needsPaintIds
+    end
+    tree.lastComputedSize = tree.computedSize
+    tree.computedSize = result
+    tree.lastParentSize = parentSize
+  else
+    -- the previous layout information can be reused, so just do that
+    result = tree.computedSize
+  end
+
+  Cache.SetAmbient(prev)
+  return result
 end
 
 sgui_local.Cache = Cache
