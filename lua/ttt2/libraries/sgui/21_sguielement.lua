@@ -30,6 +30,10 @@ function CLS:RecordPaint(...)
   return sgui.Element.RecordPaint(self, ...)
 end
 
+function CLS:RecordPaintAfter(...)
+  return sgui.Element.RecordPaintAfter(self, ...)
+end
+
 CLS.mt = { __index = CLS }
 setmetatable(CLS, sgui.Element)
 

@@ -59,5 +59,9 @@ function CLS:RecordPaint(w, h)
 
 end
 
+function CLS:RecordPaintAfter(w, h)
+
+end
+
 CLS.mt = { __index = CLS }
 sgui.Element = CLS

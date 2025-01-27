@@ -141,6 +141,9 @@ local function RebuildCache(cache, cacheTree, path, declTree, params)
         if not inst:Update(options) then
           -- update returned false, need to recreate
           inst = nil
+        else
+          -- Update succeeded, needs to repaint
+          cache:MarkNeedsPaint(result.id)
         end
       end
     else
@@ -162,7 +165,9 @@ local function RebuildCache(cache, cacheTree, path, declTree, params)
     if result.id then
       cache:ReplaceId(result.id, newId)
     end
-    result.id = cache:NextId()
+    result.id = newId
+    cache:MarkNeedsPaint(newId)
+    cache:RecordId(newId, cacheTree)
   end
 
   -- now build up our result
@@ -223,8 +228,14 @@ function Cache:new()
 
   result.tree = nil
   result.treeCache = {}
-  result.drawListChanges = {}
-  result.drawList = {}
+
+  result.cacheById = {}
+  result.needsPaintIds = {}
+  result.removedIds = {}
+  result.replacedIds = {}
+
+  result.drawBefore = {}
+  result.drawAfter = {}
 
   return result
 end
@@ -239,24 +250,32 @@ function Cache.GetAmbient()
   return ambientCache
 end
 
-function Cache:NextId()
-  local result = elemNextId
-  elemNextId = result + 1
-  return result
-end
-
 function Cache:Update(tree, params)
   local path = MakePathTbl()
   self.tree = RebuildCache(self, self.treeCache, path, tree, params)
   return self.tree
 end
 
+function Cache:NextId()
+  local result = elemNextId
+  elemNextId = result + 1
+  return result
+end
+
+function Cache:RecordId(id, cache)
+  self.cacheById[id] = cache
+end
+
+function Cache:MarkNeedsPaint(id)
+  self.needsPaintIds[#self.needsPaintIds + 1] = id
+end
+
 function Cache:RemoveId(id)
-  -- TODO: mark id removal somehow reasonable
+  self.removedIds[#self.removedIds + 1] = id
 end
 
 function Cache:ReplaceId(oldId, newId)
-  -- TODO: mark id replacement somehow reasonably
+  self.replacedIds[oldId] = newId
 end
 
 sgui_local.Cache = Cache
