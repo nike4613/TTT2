@@ -273,12 +273,22 @@ function Cache:MarkNeedsPaint(id)
   needsPaintIds[id] = true
 end
 
+function Cache:GetNeedsPaint()
+  return needsPaintIds
+end
+
+function Cache:ClearNeedsPaint()
+  for k in pairs(needsPaintIds) do
+    needsPaintIds[k] = nil
+  end
+end
+
 function Cache:RemoveId(id)
-  removedIds[id] = true
+  --removedIds[id] = true
 end
 
 function Cache:ReplaceId(oldId, newId)
-  replacedIds[oldId] = newId
+  --replacedIds[oldId] = newId
 end
 
 function Cache:DoLayout(tree, parentSize)
@@ -295,6 +305,7 @@ function Cache:DoLayout(tree, parentSize)
     end
     tree.lastComputedSize = tree.computedSize
     tree.computedSize = result
+    tree.finalSize = nil
     tree.lastParentSize = parentSize
   else
     -- the previous layout information can be reused, so just do that
@@ -304,5 +315,7 @@ function Cache:DoLayout(tree, parentSize)
   Cache.SetAmbient(prev)
   return result
 end
+
+-- TODO: pass to finalize sizes
 
 sgui_local.Cache = Cache
