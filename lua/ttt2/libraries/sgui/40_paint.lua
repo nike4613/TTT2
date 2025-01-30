@@ -1,6 +1,5 @@
 
 local math = math
-local util = util
 
 local sgui = sgui
 local sgui_local = sgui_local
@@ -22,17 +21,6 @@ function PaintContext:new()
   return result
 end
 
-function PaintContext:RecordDraw(id, x, y, func, obj)
-  self.drawList[#self.drawList + 1] = {
-    kind = PAINT_KIND_DRAW,
-    id = id,
-    x = x,
-    y = y,
-    func = func,
-    obj = obj
-  }
-end
-
 function PaintContext:EnsureClipRect(rect)
   if self.lastClip ~= rect then
     self.drawList[#self.drawList + 1] = {
@@ -49,7 +37,7 @@ function PaintContext:EnsureMat(mat)
       kind = PAINT_KIND_MAT,
       mat = mat
     }
-    lastMat = mat
+    self.lastMat = mat
   end
 end
 
@@ -72,6 +60,7 @@ local clipStackCtxDepth = {}
 local matStackCtxDepth = {}
 local clipStack = {}
 local matStack = {}
+local idStack = {}
 
 local function GetClipRect()
   return clipStack[#clipStack]
@@ -95,6 +84,18 @@ end
 
 local function PopMat()
   matStack[#matStack] = nil
+end
+
+local function PushId(id)
+  idStack[#idStack + 1] = id
+end
+
+local function PopId()
+  idStack[#idStack] = nil
+end
+
+local function GetId()
+  return idStack[#idStack]
 end
 
 function PaintContext:Push(w, h)
@@ -135,8 +136,40 @@ function PaintContext.Get()
   return contextStack[#contextStack]
 end
 
+function PaintContext:RecordDraw(x, y, func, obj)
+  self.drawList[#self.drawList + 1] = {
+    kind = PAINT_KIND_DRAW,
+    id = GetId(),
+    x = x,
+    y = y,
+    func = func,
+    obj = obj
+  }
+end
+
+function PaintContext:RecWithState(x, y, func, obj)
+  local clip = GetClipRect()
+
+  x = x + clip.x
+  y = y + clip.y
+
+  self:RecordDraw(x, y, func, obj)
+end
+
 sgui.draw = sgui.draw or {}
-local sdraw = sgui.draw
+sgui_local.draw = sgui_local.draw or {}
+
+local sldraw = sgui_local.draw
+
+sldraw.GetClipRect = GetClipRect
+sldraw.PushClipRect = PushClipRect
+sldraw.PopClipRect = PopClipRect
+sldraw.GetMat = GetMat
+sldraw.PushMat = PushMat
+sldraw.PopMat = PopMat
+sldraw.GetId = GetId
+sldraw.PushId = PushId
+sldraw.PopId = PopId
 
 ---
 -- Pushes a new clip rect to the stack.
