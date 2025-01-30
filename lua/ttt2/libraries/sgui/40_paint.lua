@@ -147,19 +147,16 @@ function PaintContext:RecordDraw(x, y, func, obj)
   }
 end
 
-function PaintContext:RecWithState(x, y, func, obj)
-  local clip = GetClipRect()
-
-  x = x + clip.x
-  y = y + clip.y
-
-  self:RecordDraw(x, y, func, obj)
-end
-
 sgui.draw = sgui.draw or {}
 sgui_local.draw = sgui_local.draw or {}
 
+local sdraw = sgui.draw
 local sldraw = sgui_local.draw
+
+function PaintContext:RecWithState(x, y, func, obj)
+  x, y = sdraw.ConvertCoords(x, y)
+  self:RecordDraw(x, y, func, obj)
+end
 
 sldraw.GetClipRect = GetClipRect
 sldraw.PushClipRect = PushClipRect
@@ -172,6 +169,35 @@ sldraw.PushId = PushId
 sldraw.PopId = PopId
 
 ---
+-- Converts a pair of element-space coordinates into coordinates to use in recorded paint commands.
+-- @param x number The X coordinate to convert
+-- @param y number The Y coordinate to convert
+-- @return number The converted X coordinate
+-- @return number The converted Y coordinate
+-- @realm client
+function sgui.draw.ConvertCoords(x, y)
+  local clip = GetClipRect()
+  -- TODO: ui scaling
+  return clip.x + x, clip.y + y
+end
+
+---
+-- Converts an element-space size into screen-space size to use in recorded paint commands.
+-- @param w number The first size to convert
+-- @param h number The second size to convert
+-- @param a number The third size to convert
+-- @param b number The fourth size to convert
+-- @return number The first converted sixe
+-- @return number The second converted size
+-- @return number The third converted size
+-- @return number The fourth converted size
+-- @realm client
+function sgui.draw.ConvertSize(w, h, a, b)
+  -- TODO: ui scaling
+  return w, h, a, b
+end
+
+---
 -- Pushes a new clip rect to the stack.
 -- @param x number The X coordinate (relative to the current clip-rect) of the top-left corner of the new rect.
 -- @param y number The Y coordinate (relative to the current clip-rect) of the top-left corner of the new rect.
@@ -181,6 +207,7 @@ sldraw.PopId = PopId
 -- @realm client
 function sgui.draw.PushClipRect(x, y, w, h)
   local cur = GetClipRect()
+  -- TODO: scale things
   x = math.min(x, cur.w)
   y = math.min(y, cur.h)
   w = w or cur.w
