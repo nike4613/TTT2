@@ -126,12 +126,6 @@ local function RebuildCache(cache, cacheTree, path, declTree, params)
     end
   end
 
-  -- now here, create a flattened children list (in order)
-  local flatChildren = {}
-  for _,v in ipairs(children) do
-    table.Add(flatChildren, v)
-  end
-
   -- next, instantiate or reuse the existing instantiation
   local result = cacheTree.result
   local inst = result and result.inst
@@ -173,10 +167,18 @@ local function RebuildCache(cache, cacheTree, path, declTree, params)
     cache:RecordId(newId, cacheTree)
   end
 
+  -- now here, create a flattened children list (in order)
+  local flatChildren = {}
+  for _,v in ipairs(children) do
+    table.Add(flatChildren, v)
+    v.parentId = result.id
+  end
+
   -- now build up our result
   result.inst = inst
   result.children = flatChildren
   result.type = sgui_local.NodeTy.Normal
+  result.parentId = nil -- make sure to clear parentId so that the root ALWAYS has no parentId
 
   -- and cache it
   cacheTree.result = result
@@ -188,8 +190,10 @@ local function RebuildCache(cache, cacheTree, path, declTree, params)
     local idx = l - i
     if not children[idx] then
       -- we're removing an object, so make sure to also remove its id
-      cache:RemoveId(cacheTree.children[idx].id)
+      cache:RemoveId(cacheTree.children[idx].result.id)
       cacheTree.children[idx] = nil
+      -- this means a child was removed, we need to repaint
+      cache:MarkNeedsPaint(result.id)
     end
   end
 
@@ -243,7 +247,7 @@ function Cache:new()
 
   result.mgr = LayoutMgr:new(result)
   result.tree = nil
-  result.treeCache = {}
+  result.treeCache = { children = {} }
   result.flatTree = {}
 
   return result
@@ -286,6 +290,7 @@ function Cache:GetNeedsPaint()
   return needsPaintIds
 end
 
+-- TODO: only clear nodes owned by this cache
 function Cache:ClearNeedsPaint()
   for k in pairs(needsPaintIds) do
     needsPaintIds[k] = nil
@@ -300,6 +305,136 @@ function Cache:ReplaceId(oldId, newId)
   --replacedIds[oldId] = newId
 end
 
+function Cache:GetChildBasedSize(getPlaceholderSize)
+  self.getPlaceholderSize = getPlaceholderSize
+
+  local needsPaint = self:GetNeedsPaint()
+  -- enumerate through flatTree forwards, because that's children->parent
+  for i = 1, #self.flatTree, 1 do
+    local elem = self.flatTree[i]
+
+    -- we only need to compute sizing on an element if it's marked needsPaint
+    if needsPaint[elem.id] then
+      local newSize
+      if elem.type == sgui_local.NodeTy.Normal then
+        -- normal element, need to prepare and get derived size
+        elem.inst:PrepareForLayout(#elem.children)
+        newSize = elem.inst:GetChildDerivedSize(self.mgr, elem.children)
+      else
+        -- not a normal element, shouldn't be in this list
+        error("Somehow, a non-Normal node type made it in the tree! Real type: " .. elem.type)
+      end
+
+      if TableEq(newSize, elem.childSize) then
+        -- new and old sizes are the same, further work does not need ot be done in later passes unless
+        -- a parent's final size changed, which will update needsPaint for us
+        needsPaint[elem.id] = nil
+      else
+        -- otherwise, the size changed, we need to both keep ourselves marked, and also mark our parent
+        elem.childSize = newSize
+        needsPaint[elem.id] = true
+        if elem.parentId then
+          needsPaint[elem.parentId] = true
+        end
+      end
+    end
+  end
+
+  self.getPlaceholderSize = nil
+
+  -- final result size is the topmost element's size, and the topmost element is the last in the list
+  return self.flatTree[#self.flatTree].childSize
+end
+
+---
+-- Gets a specified child's size as it is understood at this moment in time.
+-- @param table child The child to get the size of
+-- @return table The size of the child
+function LayoutMgr:GetChildSize(child)
+  -- TODO: return child final size in PerformLayout steop
+  if child.type == sgui_local.NodeTy.Normal then
+    -- normal element, childSize is stored inline
+    return child.childSize
+  elseif child.type == sgui_local.NodeTy.Placeholder then
+   -- placeholder element, use getPlaceholderSize
+   if not self.getPlaceholderSize then
+     error("Placeholder element in tree with no fillers")
+   end
+
+   return self.getPlaceholderSize(child)
+  else
+    error("Invalid element type " .. child.type)
+  end
+end
+
+function Cache:GetParentBasedSize(parentSize, setPlaceholderParentSize)
+  self.explicitParentSizes = {}
+
+  local needsPaint = self:GetNeedsPaint()
+
+  -- enumerate through flatTree backwrads, because that's parent->children
+  for i = #self.flatTree, 1, -1 do
+    local elem = self.flatTree[i]
+
+    -- we only need to update sizing if needsPaint is set OR its parent's size is different
+    local elemParentSize = self:TryGetParentSize(elem) or parentSize
+    if needsPaint[elem.id] or not TableEq(elemParentSize, elem.lastParentSize) then
+      elem.lastParentSize = elemParentSize
+
+      local newSize = elem.inst:GetParentDerivedSize(self.mgr, elemParentSize, elem.children)
+
+      if TableEq(newSize, elem.finalSize) then
+        -- same final size, unmark needsPaint
+        -- it'll be re-marked as needed if child sizes change, and before PerformLayout, will be
+        -- re-marked if total child count changed
+        needsPaint[elem.id] = nil
+      else
+        -- different final size, need to mark both ourselves and our parent as needsPaint
+        elem.finalSize = newSize
+        needsPaint[elem.id] = true
+        if elem.parentId then
+          needsPaint[elem.parentId] = true
+        end
+      end
+    end
+
+    -- if any of this element's children are placeholders, set their parent size
+    for j = 1, #elem.children do
+      local child = elem.children[j]
+      if child.type == sgui_local.NodeTy.Placeholder then
+        if not setPlaceholderParentSize then
+          error("Placeholder element in tree with no fillers")
+        end
+
+        setPlaceholderParentSize(child, elem.finalSize)
+      end
+    end
+  end
+
+  self.explicitParentSizes = nil
+
+  -- final result size is the topmost element's size, as in the first stage
+  return self.flatTree[#self.flatTree].finalSize
+end
+
+function Cache:TryGetParentSize(elem)
+  -- first, check explicitParentSizes
+  if self.explicitParentSizes[elem.id] then
+    return self.explicitParentSizes[elem.id]
+  end
+
+  -- then, try accessing the physical parent's size
+  if elem.parentId then
+    return cacheById[elem.parentId].result.finalSize
+  end
+
+  -- otherwise, give up
+  return nil
+end
+
+function Cache:MarkExplicitParentSize(childId, size)
+  self.explicitParentSizes[childId] = size
+end
 
 -- TODO: pass to finalize sizes
 

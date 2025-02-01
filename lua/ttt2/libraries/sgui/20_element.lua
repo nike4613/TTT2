@@ -46,7 +46,7 @@ function CLS:PrepareForLayout(childCount)
     fillers[#fillers] = nil
   end
 
-  self.root = self.cache:Update(self:GetShadowTree(), sgui_local.Params:new(self.options, fillers))
+  self.cache:Update(self:GetShadowTree(), sgui_local.Params:new(self.options, fillers))
 end
 
 ---
@@ -59,6 +59,14 @@ end
 -- @param table children The list of children for this element.
 -- @return table A table describing the size this element wants to take up.
 function CLS:GetChildDerivedSize(mgr, children)
+  if self.cache then
+    -- this is a ShadowTree-based node, call into the cache for sizing
+    return self.cache:GetChildBasedSizing(function(placeholder)
+     return mgr:GetChildSize(children[placeholder.idx])
+    end)
+  end
+
+  -- non-ShadowTree-based node, do normal box layout
   -- TODO:
 end
 
@@ -69,8 +77,18 @@ end
 -- the sizing routines of every element in the tree.
 -- @param table mgr The manager through which information about the rest of the layout pass can be obtained.
 -- @param table parentSize The final size of this element's parent.
+-- @param table children The list of children for this element
 -- @return table A table describing the final size of this element.
-function CLS:GetParentDerivedSize(mgr, parentSize)
+function CLS:GetParentDerivedSize(mgr, parentSize, children)
+  if self.cache then
+    -- this is a ShadowTree-based node, call into the cache for sizing
+    return self.cache:GetParentBasedSize(parentSize, function(placeholder, size)
+      -- lmao, we're using implementation details here because I don't want to publicly expose this
+      mgr.cache:MarkExplicitParentSize(children[placeholder.idx].id, size)
+    end)
+  end
+
+  -- non-ShadowTree-based node, do normal box layout
   -- TODO:
 end
 
