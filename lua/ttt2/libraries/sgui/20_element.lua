@@ -100,6 +100,22 @@ end
 -- @param table size The final size of this element.
 -- @param table children The list of children of this element.
 function CLS:PerformLayout(mgr, size, children)
+  if self.cache then
+    -- this is a ShadowTree-based node, perform layout using the computed tree
+    self.cache:PerformLayout()
+
+    -- then go through our placeholders and assign child positions basd on their final position
+    for i = 1, #self.childrenFillers do
+      local filler = self.childrenFillers[i]
+
+      self.cache:SetCurrentParentPos(filler.px, filler.py)
+      mgr:SetChildPos(children[filler.idx], filler.fx, filler.fy)
+    end
+
+    -- then we're done
+    return
+  end
+
   -- TODO:
 end
 

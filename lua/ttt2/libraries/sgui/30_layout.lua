@@ -436,6 +436,67 @@ function Cache:MarkExplicitParentSize(childId, size)
   self.explicitParentSizes[childId] = size
 end
 
--- TODO: pass to finalize sizes
+function Cache:PerformLayout()
+  self:SetCurrentParentPos(0, 0)
+
+  local needsPaint = self:GetNeedsPaint()
+
+  -- go through from parents down to compute layout
+  for i = #self.flatTree, 1, -1 do
+    local elem = self.flatTree[i]
+
+    if not elem.fx or not elem.fy then
+      -- doesn't have final positions, needs to be touched
+      needsPaint[elem.id] = true
+    end
+
+    -- only need to relayout if needsPaint
+    if needsPaint[elem.id] then
+      if elem.parentId then
+        -- record the parent pos
+        local parent = cacheById[elem.parentId].result
+        self:SetCurrentParentPos(parent.fx, parent.fy)
+      end
+
+      -- do layout
+      elem.inst:PerformLayout(self.mgr, elem.finalSize, elem.children)
+      -- children will be automatically marked if their position changes
+    end
+  end
+
+  self:SetCurrentParentPos(0, 0)
+end
+
+function Cache:SetCurrentParentPos(x, y)
+  self.curParentX = x
+  self.curParentY = y
+end
+
+function Cache:GetParentFullPos()
+  return self.curParentX, self.curParentY
+end
+
+function LayoutMgr:SetChildPos(child, x, y)
+    child.x = x
+    child.y = y
+
+    local px, py = self.cache:GetParentFullPos()
+    child.px = px
+    child.py = py
+
+    local fx = x + px
+    local fy = y + py
+
+    if child.type == sgui_local.NodeTy.Normal then
+      if child.fx ~= fx or child.fy ~= fy then
+        -- if the position changed, mark the child as needing a repaint
+        self.cache:MarkNeedsPaint(child.id)
+      end
+    end
+
+
+    child.fx = x + px
+    child.fy = y + py
+end
 
 sgui_local.Cache = Cache
