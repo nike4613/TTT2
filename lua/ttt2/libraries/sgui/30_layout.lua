@@ -5,7 +5,10 @@
 local sgui = sgui
 local sgui_local = sgui_local
 
-sgui_local.elemId = {}
+sgui_local.NodeTy = {
+  Normal = 0,
+  Placeholder = 1,
+}
 
 local function TableEq(o1, o2)
   if o1 == o2 then return true end
@@ -173,6 +176,7 @@ local function RebuildCache(cache, cacheTree, path, declTree, params)
   -- now build up our result
   result.inst = inst
   result.children = flatChildren
+  result.type = sgui_local.NodeTy.Normal
 
   -- and cache it
   cacheTree.result = result
@@ -260,10 +264,6 @@ setmetatable(cacheById, {__mode="v"}) -- cacheById should be a weak-valued table
 local needsPaintIds = {}
 local removedIds = {}
 local replacedIds = {}
-
--- TODO: where should the draw lists actually go, because i'm 100% certain it shouldn't be here
-local drawBefore = {}
-local drawAfter = {}
 
 function Cache:RecordId(id, cache)
   cacheById[id] = cache

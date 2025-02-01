@@ -28,22 +28,60 @@ function CLS:GetShadowTree()
 end
 
 ---
--- @param table parentSize The parent's sizing information
--- @param table children The children to layout
--- @return table Positioning table
--- { x, y, w, h } where they can be values based on pseudo-sizes and pseudo-positions. x/y, are relative to parent
-function CLS:PerformLayout(parentSize, children)
+-- Called before the core layout routines.
+-- @note If you are deriving from Element and are not using @see{CLS:GetShadowTree}, override this to do nothing.
+-- @param number The number of children this element was given.
+function CLS:PrepareForLayout(childCount)
   self.cache = self.cache or sgui_local.Cache:new()
-  self.root = self.cache:Update(self:GetShadowTree(), sgui_local.Params:new(self.options, children))
-  -- TODO: how can we implement default layout functionality? A separate method that box-model elements call?
-  return self.cache:DoLayout(self.root, parentSize)
+  self.childrenFillers = self.childrenFillers or {}
+  local fillers = self.childrenFillers
+  -- update the fillers list to have the right count
+  while #fillers < childCount do
+    fillers[#fillers + 1] = {
+      type = sgui_local.NodeTy.Placeholder,
+      idx = #fillers + 1,
+    }
+  end
+  while #fillers > childCount do
+    fillers[#fillers] = nil
+  end
+
+  self.root = self.cache:Update(self:GetShadowTree(), sgui_local.Params:new(self.options, fillers))
 end
 
 ---
--- Performs layout using the standard box model.
--- @see @{CLS:PerformLayout}
-function CLS:BoxModelLayout(parentSize, children)
-  local cache = sgui_local.Cache.GetAmbient()
+-- First pass of layout. This function is called on each element of the tree from the bottom up.
+-- The implementation can ask for what size the children want to be and act on that. Child positions
+-- should not be set until a later pass.
+-- @note This should probably never be overridden. Good layout behavior depends on close coordination between
+-- the sizing routines of every element in the tree.
+-- @param table mgr The manager through which operations on children are performed.
+-- @param table children The list of children for this element.
+-- @return table A table describing the size this element wants to take up.
+function CLS:GetChildDerivedSize(mgr, children)
+  -- TODO:
+end
+
+---
+-- Second pass of layout. This function is called on each element of the tree from the top down.
+-- The implementation is given its parent's size, and is expected to determine a final absolure size.
+-- @note This should probably never be overridden. Good layout behavior depends on close coordination between
+-- the sizing routines of every element in the tree.
+-- @param table mgr The manager through which information about the rest of the layout pass can be obtained.
+-- @param table parentSize The final size of this element's parent.
+-- @return table A table describing the final size of this element.
+function CLS:GetParentDerivedSize(mgr, parentSize)
+  -- TODO:
+end
+
+---
+-- Final pass of layout. This function is called in an indeterminate order, and is expected ONLY to adjust the
+-- positioning of children.
+-- @note If special layout is required, this is the function to override.
+-- @param table mgr The manager through which properties of the children can be obtained.
+-- @param table size The final size of this element.
+-- @param table children The list of children of this element.
+function CLS:PerformLayout(mgr, size, children)
   -- TODO:
 end
 
