@@ -193,6 +193,9 @@ local function RebuildCache(cache, cacheTree, path, declTree, params)
     end
   end
 
+  -- mark this node in the order
+  cache:RecordOrder(result)
+
   -- and return
   return result
 end
@@ -223,33 +226,39 @@ local function MakePathTbl()
   return tbl
 end
 
+local LayoutMgr = {}
+function LayoutMgr:new(cache)
+  local result = {}
+  setmetatable(result, {__index=self})
+
+  result.cache = cache
+
+  return result
+end
+
 local Cache = {}
 function Cache:new()
   local result = {}
   setmetatable(result, {__index=self})
 
+  result.mgr = LayoutMgr:new(result)
   result.tree = nil
   result.treeCache = {}
-
+  result.flatTree = {}
 
   return result
 end
 
-local ambientCache = nil
-function Cache:SetAmbient()
-  local prev = ambientCache
-  ambientCache = self
-  return prev
-end
-
-function Cache.GetAmbient()
-  return ambientCache
-end
-
 function Cache:Update(tree, params)
   local path = MakePathTbl()
+  self.flatTree = {}
   self.tree = RebuildCache(self, self.treeCache, path, tree, params)
+  -- flatTree is now a depth-first enumeration of non-placeholder children
   return self.tree
+end
+
+function Cache:RecordOrder(node)
+  self.flatTree[#self.flatTree + 1] = node
 end
 
 local elemNextId = 1 -- TODO: is it worth doing something more complex here? like a free-list?
@@ -291,30 +300,6 @@ function Cache:ReplaceId(oldId, newId)
   --replacedIds[oldId] = newId
 end
 
-function Cache:DoLayout(tree, parentSize)
-  local prev = self:SetAmbient()
-
-  local result
-  if needsPaintIds[tree.id] or not TableEq(parentSize, tree.lastParentSize) then
-    -- this tree item needs to be re-layed-out
-    result = tree.inst:PerformLayout(parentSize, tree.children)
-    if TableEq(tree.computedSize, result) then
-      -- the newly computed sizing information is the same as last time, clear needsPaint because nothing needs to change
-      needsPaintIds[tree.id] = nil
-      -- note: if the *position* of a parent changes, we'll redo paint regardless of needsPaintIds
-    end
-    tree.lastComputedSize = tree.computedSize
-    tree.computedSize = result
-    tree.finalSize = nil
-    tree.lastParentSize = parentSize
-  else
-    -- the previous layout information can be reused, so just do that
-    result = tree.computedSize
-  end
-
-  Cache.SetAmbient(prev)
-  return result
-end
 
 -- TODO: pass to finalize sizes
 
