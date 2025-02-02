@@ -12,6 +12,7 @@ local PANEL = {}
 function PANEL:Init()
   self._elemTbl = nil
   self._cache = sgui_local.Cache:new()
+  self._paint = sgui_local.PaintContext:new()
 end
 
 ---
@@ -33,14 +34,15 @@ end
 -- @ignore
 function PANEL:PerformLayout()
   self.tree = self._cache:Update(self:GetSGUIDef(), nil)
-  local prevAmbient = self._cache:SetAmbient()
 
   local w, h = self:GetSize()
-  local finalSize = self.tree.inst:PerformLayout({w=w, h=h}, self.tree.children)
+  self._cache:GetChildBasedSize(nil)
+  local finalSize = self.tree.inst:GetParentBasedSize({w=w, h=h}, nil)
   self:SetSize(finalSize.w, finalSize.h)
-  self:SetPos(finalSize.x, finalSize.y)
 
-  sgui_local.Cache.SetAmbient(prevAmbient)
+  self._cache:PerformLayout()
+
+  -- TODO: record paint
 end
 
 ---
