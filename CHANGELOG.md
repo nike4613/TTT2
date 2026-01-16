@@ -4,6 +4,107 @@ All notable changes to TTT2 will be documented here. Inspired by [keep a changel
 
 ## Unreleased
 
+### Changed
+
+- Made improvements to door destruction (by @TW1STaL1CKY)
+  - Bodygroups from destroyed doors are now transferred to their physics prop
+  - Entities parented to destroyed doors are now transferred to their physics prop
+  - Door props are now spawned as soon as the door is destroyed (instead of a frame later)
+  - Reuse existing vector globals instead of creating new vectors
+- Added ttt_filter_subrole (by @mrxonte)
+
+### Fixed
+
+- Fixed markerVision null entity errors (by @mexikoedi)
+- Fixed missing ttt_filter_role in ttt2.fgd (by @mrxonte)
+- Fixed loading screen tips translation (by @mexikoedi)
+- Fixed missing `limit_left` translation (by @mexikoedi)
+- Fixed `GetHeadshotMultiplier` nil value error (by @mexikoedi)
+
+## [v0.14.5b](https://github.com/TTT-2/TTT2/tree/v0.14.5b) (2025-08-18)
+
+### Changed
+
+- Made improvements to how data returned from the `GM:TTTBodySearchPopulate` hook is handled to make custom bodysearch entry creation better (by @TW1STaL1CKY)
+  - Added support for icon text (like the timer on the Death Time entry)
+  - Added support for specifying the ordering so custom entries can be placed between existing entries
+  - Added support for coloring the entry's background box
+  - Added support for specifying a custom height for an entry
+  - Gave `GM:TTTBodySearchPopulate` hook a new boolean argument named `scoreboard` which becomes true if the hook is being called to populate the bodysearch info on the scoreboard
+- `GM:TTTModifyTargetedEntity` can now return a second value to modify the distance of a new target entity (by @TW1STaL1CKY)
+
+### Fixed
+
+- Fixed guns not applying themselves as their damage inflictor (by @TW1STaL1CKY)
+- Fixed markerVision entities getting culled by the game if too far away (by @NickCloudAT)
+- Fixed not being able to use entities through water and clip brushes (by @TW1STaL1CKY)
+- Fixed `GM:TTTBodySearchPopulate` failing to create custom bodysearch entries properly (by @TW1STaL1CKY)
+- Fixed scoreboard breaking if a custom bodysearch entry has no icon (by @TW1STaL1CKY)
+- remove CS:S check since the resources got integrated (excluding music and maps) (by @xopez)
+
+## [v0.14.4b](https://github.com/TTT-2/TTT2/tree/v0.14.4b) (2025-06-15)
+
+### Fixed
+
+- Fixed health station continuous use not working (by @wgetJane)
+- Fixed the shop search breaking when using certain special characters (by @NickCloudAT)
+- Fixed propspec not working (by @wgetJane)
+- Fixed a regression in TTT voice chat team colors (see <https://github.com/Facepunch/garrysmod/commit/38b7394ced29ffe318213e580efa4b1090828ac7>)
+- Fixed ghost viewmodels briefly appearing from weapons held by other players (by @TW1STaL1CKY)
+- Fixed corpses not inheriting the bodygroups from the players model (by @NickCloudAT)
+- Fixed edgecases where ttt_flame entities break when their extra entities fail to initialise (by @TW1STaL1CKY)
+- Fixed null physics object error for doors (by @mexikoedi)
+
+## [v0.14.3b](https://github.com/TTT-2/TTT2/tree/v0.14.3b) (2025-03-18)
+
+### Added
+
+- Added C4 cvars for adjusting the range & falloff of C4 explosions (by @Spanospy)
+  - C4 explosions will now also respect the weapon's configured damage scaling
+- Added option to select preferred unit of length for distance displays (by @wgetJane)
+- Added `GM:TTT2ArmorHandlePlayerTakeDamage` hook for modifying/overriding armor behavior (by @wgetJane)
+- Added server option for body armor to protect against crowbar damage (by @wgetJane)
+- Added `GM:TTTLastWordsMsg` hook from base TTT (Facepunch/garrysmod/pull/2227, by @wgetJane)
+- Port new TTT entity ttt_filter_role to TTT2 (Facepunch/garrysmod/pull/2225 by @figardo, ported by @wgetJane)
+- Added 2 new sprint settings (by @wgetJane)
+  - Stamina cooldown time before stamina begins regenerating after sprinting, 0.8 seconds by default
+  - Option to require forward key to be held to sprint, enabled by default
+- Added option to enable/disable proximity voice chat for the team voice chat (by @NickCloudAT)
+
+### Changed
+
+- Updated Russian and English localization files (by @Satton2)
+- Updated the list of troublesome addons used by the addonchecker
+- Changed option for body armor to protect against headshot damage by default (by @wgetJane)
+
+### Fixed
+
+- Fixed classic armour protecting against crowbar damage (by @wgetJane)
+- Fixed C4/Radio sounds not playing outside of PAS (Facepunch/garrysmod/pull/2203, by @figardo)
+- Fixed players sometimes being revealed as dead when they chat/voicechat right as they die (Facepunch/garrysmod/pull/2229, by @wgetJane)
+- Fixed various bugs related to using doors and buttons, to match base TTT behavior (by @wgetJane)
+  - Fixed brush doors on certain maps not being usable
+  - Fixed certain doors on certain maps being forcibly usable when they shouldn't be
+  - Fixed func_rotating being forcibly usable
+  - Fixed vehicles not being usable
+  - Removed forced button solidity
+  - Improved targetID trace detection for doors and buttons
+  - Allow brush doors to be detected as destructible for targetID
+  - Use NW2Vars instead of NWVars for door variables for more efficient networking
+  - Fixed clientside door.GetAll() to return a more updated list of doors
+  - Removed clientside TTT2PostDoorSetup hook
+  - Changed crowbar unlocking behavior to match base TTT
+- Fixed lua errors after autorefresh (by @wgetJane)
+- Fixed Hud errors when picking up items or weapons with no viable icon (by @NickCloudAT)
+
+## [v0.14.2b](https://github.com/TTT-2/TTT2/tree/v0.14.2b) (2025-02-02)
+
+### Fixed
+
+- Fixed new outlines' `OUTLINE_MODE_VISIBLE` and `OUTLINE_MODE_BOTH`
+
+## [v0.14.1b](https://github.com/TTT-2/TTT2/tree/v0.14.1b) (2025-02-01)
+
 ### Added
 
 - Added Korean translation (by @Kojap)
@@ -15,6 +116,8 @@ All notable changes to TTT2 will be documented here. Inspired by [keep a changel
 - Added a menu to allow admins to inspect, in detail, how and why roles are distributed as they are (by @nike4613)
 - Added option to enable team name next to role name on the HUD (by @milkwxter)
 - Added score event for winning with configurable role parameter (by @MrXonte)
+- Added ExplosiveSphereDamage game effect for easy calculation of explosion damage through walls (by @MrXonte)
+- Added support for outlines of different thickness (by @Wardenpotato)
 
 ### Fixed
 
@@ -39,6 +142,10 @@ All notable changes to TTT2 will be documented here. Inspired by [keep a changel
 - Fixed a few errors in shop error messages (by @Histalek)
 - Fixed `markerVision`'s registry table being able to contain duplicate obsolete entries, thus fixing potential syncing issues with markers (by @TW1STaL1CKY)
 - Fixed issue in new Ammo dropping that could cause an error when dropping for modified weapon bases. (by @MrXonte)
+- Fixed C4 not showing the correct inflictor when the player is killed (by @TimGoll)
+- Fixed M16 Ironsight misalignment (by @SvveetMavis)
+- Fixed outline interactions with certain weapon scopes (by @WardenPotato)
+- Fixed outlines not rendering uniformly (by @WardenPotato)
 
 ### Changed
 
@@ -60,6 +167,8 @@ All notable changes to TTT2 will be documented here. Inspired by [keep a changel
 - Moved all role-related admin options into the "Roles" menu (by @nike4613)
 - Improved description of role layering (by @nike4613)
 - Improved the role layering menu by showing which role is enabled and which is disabled (by @TimGoll)
+- Reworked C4 damage calculation with new gameEffect ExplosiveSphereDamage (by @MrXonte)
+- Changed the amount the M16 zooms in (by @SvveetMavis)
 
 ## [v0.14.0b](https://github.com/TTT-2/TTT2/tree/v0.14.0b) (2024-09-20)
 

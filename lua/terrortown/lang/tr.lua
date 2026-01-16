@@ -38,6 +38,8 @@ L.win_showreport = "{num} saniye boyunca raunt raporuna bakalım."
 
 L.limit_round = "Raunt sınırına ulaşıldı. Bir sonraki harita yakında yüklenecek."
 L.limit_time = "Zaman sınırına ulaşıldı. Bir sonraki harita yakında yüklenecek."
+-- limit_left needed for some third-party addons which rely on this vanilla TTT string
+L.limit_left = "Harita değişmeden önce {num} raunt veya {time} dakika kaldı."
 L.limit_left_session_mode_1 = "Harita değişmeden önce {num} raunt veya {time} dakika kaldı."
 L.limit_left_session_mode_2 = "Harita değişmeden önce {time} dakika kaldı."
 L.limit_left_session_mode_3 = "Harita değişmeden önce {num} raunt kaldı."
@@ -312,11 +314,6 @@ Enerji patlamaları yakındaki insanlara zarar verir.]]
 
 -- Radio
 L.radio_broken = "Radyonuz yok edildi!"
-
-L.radio_desc = [[
-Dikkat dağıtmak veya kandırmak için sesler çıkarır.
-
-Radyoyu bir yere yerleştirin ve ardından bu menüdeki Radyo sekmesini kullanarak üzerindeki sesleri çalın.]]
 
 -- Silenced pistol
 L.sipistol_name = "Susturuculu Tabanca"
@@ -1669,6 +1666,7 @@ L.label_voice_drain_normal = "Normal oyuncular için tik başına azalma"
 L.label_voice_drain_admin = "Yöneticiler ve genel polislik rolleri için tik başına azalma"
 L.label_voice_drain_recharge = "Sesli sohbet etmeme işareti başına şarj oranı"
 L.label_locational_voice = "Canlı oyuncular için yakın sesli sohbeti etkinleştir"
+--L.label_locational_voice_team = "Enable proximity team voice chat for living players"
 L.label_locational_voice_prep = "Hazırlanma sürecinde konumsal ses sohbetini etkinleştir"
 L.label_locational_voice_range = "Konumsal ses sohbetinin uzaklık oranı"
 L.label_armor_on_spawn = "(Yeniden) canlanmada oyuncu zırhı"
@@ -2081,11 +2079,11 @@ L.flaregun_help_primary = "Varlığı yak"
 
 -- 2023-12-14
 L.marker_vision_owner = "Sahip: {owner}"
-L.marker_vision_distance = "Uzaklık: {distance}m"
-L.marker_vision_distance_collapsed = "{distance}m"
+L.marker_vision_distance = "Uzaklık: {distance}"
+L.marker_vision_distance_collapsed = "{distance}"
 
 L.c4_marker_vision_time = "Patlamaya: {time}"
-L.c4_marker_vision_collapsed = "{time} / {distance}m"
+L.c4_marker_vision_collapsed = "{time} / {distance}"
 
 L.c4_marker_vision_safe_zone = "Bombadan güvenli bölge"
 L.c4_marker_vision_damage_zone = "Bomba hasar bölgesi"
@@ -2693,8 +2691,8 @@ atayın. Alt rolün tüm boş yuvaları doldurulmuşsa, dikkate almayın.
 --
 --This information is only ever available for the last round which was started on this map with the option enabled.
 --
---Must be enabled when role selection happens (when the round starts) to take effect.]]
---L.label_roleinspect_enable = "Enable capturing role selection inspection information"
+--Must be enabled when role distribution happens (when the round starts) to take effect.]]
+--L.label_roleinspect_enable = "Enable capturing role distribution inspection information"
 --L.label_roleinspect_no_data = "No role inspection data is available."
 --L.help_roleinspect_unknown_stage = "Unknown stage when rendering UI. Please open an issue."
 
@@ -2726,24 +2724,24 @@ atayın. Alt rolün tüm boş yuvaları doldurulmuşsa, dikkate almayın.
 --L.roleinspect_reason_not_selectable_d_no_consider_s_preselect = "The role is not selectable."
 --L.roleinspect_reason_not_enabled_d_no_consider_s_preselect = "The role is not enabled."
 --L.roleinspect_reason_role_chance_d_no_consider_s_preselect = "The random check for whether the role should appear failed."
---L.roleinspect_reason_no_players_d_no_consider_s_preselect = "There are not enough players for this role to spawn."
---L.roleinspect_reason_role_decision_d_no_consider_s_preselect = "The role implementation decided it was not selectable, and provided no more detailed information."
+--L.roleinspect_reason_no_players_d_no_consider_s_preselect = "There are not enough players for this role to be considered."
+--L.roleinspect_reason_role_decision_d_no_consider_s_preselect = "The role distribution decided it was not selectable, and provided no more detailed information."
 
 -- ROLEINSPECT_STAGE_LAYERING
 --L.header_roleinspect_stage_layering = "Stage 2: Layering"
 --L.help_roleinspect_stage_layering = [[
 --This stage distributes candidate roles among player slots. This is also where Role Layering is applied.
 --
---The layers shown here will be different than thoes configured:
+--The layers shown here will be different than those configured:
 --- Roles that did not pass the previous stage are not shown
 --- Layers with no candidate roles are not shown (and layers are renumbered)
 --
 --Hover over each role for details about that role.
 --
 --Max roles: {maxRoles}
---Max baseroles: {maxBaseroles}]]
+--Max base roles: {maxBaseroles}]]
 --L.header_inspect_layers_baseroles = "Base role layers"
---L.header_inspect_layers_subroles = "{baserole} sub-role layers"
+--L.header_inspect_layers_subroles = "{baserole} subrole layers"
 --L.tooltip_layering_role_desc = [[
 --Role: {name}
 --Decision: {decision}
@@ -2751,11 +2749,11 @@ atayın. Alt rolün tüm boş yuvaları doldurulmuşsa, dikkate almayın.
 --# of Players: {finalCount}]]
 --L.header_inspect_layers_order = "Subrole selection order"
 --L.help_inspect_layers_order = [[
---When selecting available subroles, first a baserole is selected (shown as the large icon). Then, a subrole is selected according to layering (shown as the small icon).
+--When selecting available subroles, first a base role is selected (shown as the large icon). Then, a subrole is selected according to layering (shown as the small icon).
 --
---This is important because there is a maximum number of roles (either explicitly, or because of playercount). Once player slots or role slots are filled, assignment stops and all remaining roles are not used.]]
+--This is important because there is a maximum number of roles (either explicitly, or because of player count). Once player slots or role slots are filled, assignment stops and all remaining roles are not used.]]
 --L.tooltip_inspect_layers_baserole = "Base role: {name}"
---L.tooltip_inspect_layers_subrole = "Selected sub role: {name}"
+--L.tooltip_inspect_layers_subrole = "Selected subrole: {name}"
 
 -- Reasons
 
@@ -2766,19 +2764,19 @@ atayın. Alt rolün tüm boş yuvaları doldurulmuşsa, dikkate almayın.
 --L.roleinspect_reason_too_many_roles_d_no_consider_s_layering = "Other roles filled all role slots."
 
 -- ROLEINSPECT_STAGE_BASEROLES
---L.header_roleinspect_stage_baseroles = "Stage 4: Baserole Assignment"
+--L.header_roleinspect_stage_baseroles = "Stage 3: Base role Assignment"
 --L.help_roleinspect_stage_baseroles = [[
---This stage assigns baseroles to players. If derandomization is enabled, players' role weights are considered, and displayed below in a chart.
+--This stage assigns base roles to players. If derandomization is enabled, players' role weights are considered, and displayed below in a chart.
 --
---Each section shows all players which were considered for that baserole, with the highlighted ones being the ones actually selected.]]
+--Each section shows all players which were considered for that base role, with the highlighted ones being the ones actually selected.]]
 --L.header_inspect_baseroles_order = "{name} assignment"
 
 -- ROLEINSPECT_STAGE_SUBROLES
---L.header_roleinspect_stage_subroles = "Stage 5: Subrole Upgrading"
+--L.header_roleinspect_stage_subroles = "Stage 4: Subrole Upgrading"
 --L.help_roleinspect_stage_subroles = [[
---This stage upgrades players to subroles, from previously assigned baseroles.
+--This stage upgrades players to subroles, from previously assigned base roles.
 --
---Information is presented as in the baseroles stage above. Each baserole is upgraded separately.]]
+--Information is presented as in the base roles stage above. Each base role is upgraded separately.]]
 --L.header_inspect_upgrade_order = "Upgrading from {name}"
 --L.header_inspect_subroles_order = "Subrole {name}"
 --L.label_inspect_no_subroles = "No subroles were selectable."
@@ -2793,3 +2791,38 @@ L.help_rolelayering_enable = "Simgenin etrafındaki kırmızı ve yeşil kenarl�
 
 -- 2025-01-20
 L.label_hud_show_team_name = "Rol adının yanında takım adını göstermeyi etkinleştir"
+
+-- 2025-01-31
+--L.radio_desc = [[
+--Plays sounds to distract or deceive.
+--
+--Place the radio somewhere, and then remotely interact with it to choose sounds to play.]]
+
+-- 2025-02-13
+--L.help_c4_radius = [[
+--C4 uses two different zones to calculate the damage of its explosion:
+--
+--Players within the "kill zone" will receive the full damage of the devastating explosion.
+--
+--Players within the "damage zone" (and outside the "kill zone") will receive a percentage of the damage based on their position between the borders of both zones.]]
+
+--L.label_c4_radius_inner = "C4 Kill Zone radius"
+--L.label_c4_radius = "C4 Damage Zone radius"
+
+-- 2025-02-21
+L.length_in_meters = "{length}m"
+--L.length_in_yards = "{length}yd"
+--L.length_in_feet = "{length}ft"
+
+--L.label_distance_unit = "Preferred unit of length for distance displays"
+--L.choice_distance_unit_0 = "Inches"
+--L.choice_distance_unit_1 = "Meters"
+--L.choice_distance_unit_2 = "Yards"
+--L.choice_distance_unit_3 = "Feet"
+
+-- 2025-03-06
+--L.label_armor_block_clubdmg = "Enable armor blocking crowbar damage"
+
+-- 2025-03-10
+--L.label_sprint_stamina_cooldown = "Stamina cooldown time"
+--L.label_sprint_stamina_forwards_only = "Disallow sprinting backwards or laterally"
