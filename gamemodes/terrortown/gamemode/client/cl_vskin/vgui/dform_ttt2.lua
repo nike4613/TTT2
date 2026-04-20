@@ -295,6 +295,7 @@ function PANEL:MakeNumberWang(data)
 
     if data.enableToggle then
         toggle = MakeToggleButton(self, data)
+        right.toggleBtn = toggle
     end
 
     if data.enableRun then
