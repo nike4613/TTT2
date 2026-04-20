@@ -14,12 +14,12 @@ AccessorFunc(PANEL, "m_bSizeToContents", "AutoSize", FORCE_BOOL)
 ---
 -- @accessor number
 -- @realm client
-AccessorFunc(PANEL, "m_iSpacing", "Spacing")
+AccessorFunc(PANEL, "m_Padding", "Padding", FORCE_NUMBER)
 
 ---
 -- @accessor number
 -- @realm client
-AccessorFunc(PANEL, "m_Padding", "Padding")
+AccessorFunc(PANEL, "m_LabelWidth", "LabelWidth", FORCE_NUMBER)
 
 local materialReset = Material("vgui/ttt/vskin/icon_reset")
 local materialCheckmark = Material("vgui/ttt/vskin/icon_checkmark")
@@ -32,8 +32,8 @@ local materialDisable = Material("vgui/ttt/vskin/icon_disable")
 function PANEL:Init()
     self.items = {}
 
-    self:SetSpacing(4)
     self:SetPadding(10)
+    self:SetLabelWidth(350)
 
     self:SetPaintBackground(true)
 
@@ -74,11 +74,13 @@ end
 function PANEL:AddItem(left, right, buttonReset, buttonToggle, buttonRun)
     self:InvalidateLayout()
 
+    local padding = self:GetPadding()
+
     local panel = vgui.Create("DSizeToContents", self)
 
     panel:SetSizeX(false)
     panel:Dock(TOP)
-    panel:DockPadding(10, 10, 10, 0)
+    panel:DockPadding(padding, padding, padding, 0)
     panel:InvalidateLayout()
 
     if IsValid(buttonReset) then
@@ -97,13 +99,15 @@ function PANEL:AddItem(left, right, buttonReset, buttonToggle, buttonRun)
     end
 
     if IsValid(right) then
+        local labelWidth = self:GetLabelWidth()
+
         left:SetParent(panel)
         left:Dock(LEFT)
         left:InvalidateLayout(true)
-        left:SetSize(350, 20)
+        left:SetSize(labelWidth, 20)
 
         right:SetParent(panel)
-        right:SetPos(350, 0)
+        right:SetPos(labelWidth, 0)
         right:InvalidateLayout(true)
     elseif IsValid(left) then
         left:SetParent(panel)
@@ -723,8 +727,10 @@ function PANEL:MakeColorMixer(data)
     left:SetTall(data.height or 240)
     right:SetTall(data.height or 240)
 
+    local padding = self:GetPadding()
+
     right:Dock(TOP)
-    right:DockPadding(10, 10, 10, 10)
+    right:DockPadding(padding, padding, padding, padding)
 
     left:SetText(data.label)
 
