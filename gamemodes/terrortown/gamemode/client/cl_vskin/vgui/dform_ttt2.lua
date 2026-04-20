@@ -266,6 +266,92 @@ function PANEL:MakeTextEntry(data)
 end
 
 ---
+-- Adds a number wang to the form
+-- @param table data The data for the numberwang
+-- @note Structure of data = {
+-- label, default, convar, serverConVar, initial, function OnChange(value),
+-- master = { function AddSlave(self, slave) }
+-- }
+-- @return Panel The created numberwang
+-- @realm client
+function PANEL:MakeNumberWang(data)
+    local left = vgui.Create("DLabelTTT2", self)
+
+    left:SetText(data.label)
+
+    left.Paint = function(slf, w, h)
+        derma.SkinHook("Paint", "FormLabelTTT2", slf, w, h)
+
+        return true
+    end
+
+    local right = vgui.Create("DNumberWangTTT2", self)
+
+    local reset = MakeResetButton(self)
+    right:SetResetButton(reset)
+
+    -- optional buttons
+    local toggle, run
+
+    if data.enableToggle then
+        toggle = MakeToggleButton(self, data)
+    end
+
+    if data.enableRun then
+        run = MakeRunButton(self, data)
+    end
+
+    right:SetUpdateOnType(false)
+    right:SetHeightMult(1)
+
+    right.OnGetFocus = function(slf)
+        util.getHighestPanelParent(self):SetKeyboardInputEnabled(true)
+    end
+
+    right.OnLoseFocus = function(slf)
+        util.getHighestPanelParent(self):SetKeyboardInputEnabled(false)
+    end
+
+    -- Set default if possible even if the convar could still overwrite it
+    right:SetDefaultValue(data.default)
+    right:SetConVar(data.convar)
+    right:SetServerConVar(data.serverConvar)
+
+    if not data.convar and not data.serverConvar and data.initial then
+        right:SetValue(data.initial)
+    end
+
+    right.OnValueChanged = function(slf, value)
+        if isfunction(data.OnChange) then
+            data.OnChange(slf, value)
+        end
+    end
+
+    right:SetTall(32)
+    right:Dock(TOP)
+
+    self:AddItem(left, right, reset, toggle, run)
+
+    if IsValid(data.master) and isfunction(data.master.AddSlave) then
+        data.master:AddSlave(left)
+        data.master:AddSlave(right)
+        data.master:AddSlave(reset)
+
+        if IsValid(toggle) then
+            toggle:SetMaster(data.master)
+            data.master:AddSlave(toggle)
+        end
+
+        if IsValid(run) then
+            run:SetMaster(data.master)
+            data.master:AddSlave(run)
+        end
+    end
+
+    return left, right
+end
+
+---
 -- Adds a checkbox to the form
 -- @param table data The data for the checkbox
 -- @return Panel The created checkbox
