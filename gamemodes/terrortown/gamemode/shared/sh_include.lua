@@ -119,6 +119,7 @@ TTTFiles = {
         file = "cl_vskin/vgui/dcheckboxlabel_ttt2.lua",
         on = "client",
     },
+    cl_vskin__vgui__dnumberwang = { file = "cl_vskin/vgui/dnumberwang_ttt2.lua", on = "client" },
     cl_vskin__vgui__dnumslider = { file = "cl_vskin/vgui/dnumslider_ttt2.lua", on = "client" },
     cl_vskin__vgui__dtextentry = { file = "cl_vskin/vgui/dtextentry_ttt2.lua", on = "client" },
     cl_vskin__vgui__dbinderpanel = { file = "cl_vskin/vgui/dbinderpanel_ttt2.lua", on = "client" },
