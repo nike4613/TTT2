@@ -340,7 +340,7 @@ end
 function PANEL:SetEnabled(b)
     self.TextArea:SetEnabled(b)
 
-    FindMetaTable("DPanelTTT2").SetEnabled(self, b)
+    vgui.GetControlTable("DPanelTTT2").SetEnabled(self, b)
 end
 
 derma.DefineControl("DTextEntryTTT2", "", PANEL, "DPanelTTT2")

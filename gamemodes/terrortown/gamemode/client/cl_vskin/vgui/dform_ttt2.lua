@@ -349,7 +349,7 @@ function PANEL:MakeNumberWang(data)
         end
     end
 
-    return left, right
+    return right, left
 end
 
 ---
