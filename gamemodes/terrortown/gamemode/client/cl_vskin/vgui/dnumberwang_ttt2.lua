@@ -5,6 +5,7 @@ AccessorFunc(PANEL, "m_numMax", "Max")
 AccessorFunc(PANEL, "m_iDecimals", "Decimals") -- The number of decimal places in the output
 AccessorFunc(PANEL, "m_fFloatValue", "FloatValue")
 AccessorFunc(PANEL, "m_iInterval", "Interval")
+AccessorFunc(PANEL, "m_tPermittedValues", "PermittedValues")
 
 -- AnchorValue and UnAnchorValue functions are internally used for "drag-changing" the value
 local function AnchorValue(wang, button, mcode)
@@ -95,7 +96,7 @@ function PANEL:Init()
     self.Up = vgui.Create("DButton", self)
     self.Up:SetText("")
     self.Up.DoClick = function()
-        self:SetValue(self:GetValue() + self:GetInterval())
+        self:SetValue(self:GetNextValue(1))
     end
     self.Up.Paint = function(panel, w, h)
         derma.SkinHook("Paint", "NumberUp", panel, w, h)
@@ -113,7 +114,7 @@ function PANEL:Init()
     self.Down = vgui.Create("DButton", self)
     self.Down:SetText("")
     self.Down.DoClick = function()
-        self:SetValue(self:GetValue() - self:GetInterval())
+        self:SetValue(self:GetNextValue(-1))
     end
     self.Down.Paint = function(panel, w, h)
         derma.SkinHook("Paint", "NumberDown", panel, w, h)
@@ -141,7 +142,9 @@ end
 ---
 -- @ignore
 function PANEL:OnMouseWheeled(delta)
-    self:SetValue(self:GetValue() + delta * self:GetInterval())
+    if delta ~= 0 then
+        self:SetValue(self:GetNextValue(delta > 0 and 1 or -1))
+    end
 
     return true
 end
@@ -152,6 +155,43 @@ function PANEL:Think()
     if self.mouseAnchor then
         self:SetValue(self.valAnchor + self.mouseAnchor - gui.MouseY())
     end
+end
+
+---
+-- @param table tab
+-- @realm client
+function PANEL:SetPermittedValues(tab)
+    if not tab then
+        self.m_tPermittedValues = nil
+        return
+    end
+
+    local copy = table.Copy(tab)
+    table.sort(copy)
+    self.m_tPermittedValues = copy
+    self:SetValue(self:GetValue())
+end
+
+---
+-- @param number dir
+-- @return number
+-- @realm client
+function PANEL:GetNextValue(dir)
+    if self.m_tPermittedValues then
+        local current = self:GetValue()
+        for i = 1, #self.m_tPermittedValues do
+            if self.m_tPermittedValues[i] == current then
+                local nextIdx = i + dir
+                if nextIdx >= 1 and nextIdx <= #self.m_tPermittedValues then
+                    return self.m_tPermittedValues[nextIdx]
+                end
+                break
+            end
+        end
+        return dir > 0 and self.m_tPermittedValues[#self.m_tPermittedValues]
+            or self.m_tPermittedValues[1]
+    end
+    return self:GetValue() + dir * self:GetInterval()
 end
 
 ---
@@ -220,6 +260,19 @@ function PANEL:SetValue(val, ignoreConVar)
 
     if self.m_numMin ~= nil then
         val = math.max(self.m_numMin, val)
+    end
+
+    if self.m_tPermittedValues then
+        local closest = self.m_tPermittedValues[1]
+        local minDiff = math.abs(val - closest)
+        for i = 2, #self.m_tPermittedValues do
+            local diff = math.abs(val - self.m_tPermittedValues[i])
+            if diff < minDiff then
+                minDiff = diff
+                closest = self.m_tPermittedValues[i]
+            end
+        end
+        val = closest
     end
 
     local valText
